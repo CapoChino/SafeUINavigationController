@@ -1,9 +1,7 @@
 //
 //  SafeUINavigationController.h
-//  MotionDemo
 //
 //  Created by Casey Persson on 6/12/14.
-//
 //
 
 #import <UIKit/UIKit.h>
