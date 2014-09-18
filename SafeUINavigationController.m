@@ -47,13 +47,28 @@ typedef enum {
 
 @implementation SafeUINavigationController
 
+- (void)setup
+{
+    self.q = [NSOperationQueue mainQueue];
+    self.finishOps = [[NSMutableArray alloc] init];
+    self.delegate = self;
+}
+
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {
-		self.q = [NSOperationQueue mainQueue];
-		self.finishOps = [[NSMutableArray alloc] init];
-        self.delegate = self;
+        [self setup];
+    }
+    return self;
+}
+
+- (id)initWithCoder:(NSCoder *)aDecoder
+{
+    self = [super initWithCoder:aDecoder];
+    if (self)
+    {
+        [self setup];
     }
     return self;
 }
