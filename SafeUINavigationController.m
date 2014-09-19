@@ -107,7 +107,7 @@ typedef enum {
 
 - (void)finishedOp:(Op *)op
 {
-	NSLog(@"Finished a %@ transition.", (op.type == OP_PUSH ? @"PUSH" : @"POP"));
+	DebugLog(@"Finished a %@ transition.", (op.type == OP_PUSH ? @"PUSH" : @"POP"));
 	[self.finishOps removeObject:op];
 	// Disconnect the operations so both can be freed
 	op.pairedOp.pairedOp = nil;
@@ -136,12 +136,12 @@ typedef enum {
 	[self.finishOps addObject:pushFinished];
 	if (immediate)
 	{
-		NSLog(@"Pushing immediately.");
+		DebugLog(@"Pushing immediately.");
 		[pushOp start];
 	}
 	else
 	{
-		NSLog(@"Scheduling Push.");
+		DebugLog(@"Scheduling Push.");
 		[pushFinished addDependency:pushOp];
 		// Schedule it
 		[self.q addOperation:pushOp];
@@ -175,7 +175,7 @@ typedef enum {
 	[popFinished addDependency:popOp];
 	[self.finishOps addObject:popFinished];
 	// Schedule it
-	NSLog(@"Scheduling Pop: %@", popOp.vc);
+	DebugLog(@"Scheduling Pop: %@", popOp.vc);
 	[self.q addOperation:popOp];
 }
 
@@ -186,7 +186,7 @@ typedef enum {
 {
 	Op *pushOp = [[Op alloc] initWithType:OP_PUSH viewController:viewController modal:NO];
 	[pushOp addExecutionBlock:^{
-		NSLog(@"Pushing viewController: %@", viewController);
+		DebugLog(@"Pushing viewController: %@", viewController);
 		[super pushViewController:viewController animated:animated];
 	}];
 	[self doPush:pushOp];
@@ -196,7 +196,7 @@ typedef enum {
 {
 	Op *popOp = [[Op alloc] initWithType:OP_POP viewController:self.topViewController modal:NO];
 	[popOp addExecutionBlock:^{
-		NSLog(@"Popping viewController: %@", self.topViewController);
+		DebugLog(@"Popping viewController: %@", self.topViewController);
 		[super popViewControllerAnimated:animated];
 	}];
 	[self doPop:popOp];
@@ -207,7 +207,7 @@ typedef enum {
 {
 	Op *popOp = [[Op alloc] initWithType:OP_POP viewController:self.topViewController modal:NO];
 	[popOp addExecutionBlock:^{
-		NSLog(@"Popping to root view controller.");
+		DebugLog(@"Popping to root view controller.");
 		[super popToRootViewControllerAnimated:animated];
 	}];
 	[self doPop:popOp];
@@ -218,7 +218,7 @@ typedef enum {
 {
 	Op *popOp = [[Op alloc] initWithType:OP_POP viewController:self.topViewController modal:NO];
 	[popOp addExecutionBlock:^{
-		NSLog(@"Popping to viewController: %@", viewController);
+		DebugLog(@"Popping to viewController: %@", viewController);
 		[super popToViewController:viewController animated:animated];
 	}];
 	[self doPop:popOp];
@@ -231,7 +231,7 @@ typedef enum {
 	// Use weak reference inside the block as not to create a retain cycle. This does mean we must retain the pushOp until completion. This is done by the pariedOp member.
 	__weak Op *weakPushOp = pushOp;
 	[pushOp addExecutionBlock:^{
-		NSLog(@"Presenting viewController: %@", viewControllerToPresent);
+		DebugLog(@"Presenting viewController: %@", viewControllerToPresent);
 		[super presentViewController:viewControllerToPresent animated:flag completion:
 		 ^{
 			 if (completion)
@@ -249,7 +249,7 @@ typedef enum {
 	__weak Op *weakPopOp = popOp;
 	[popOp addExecutionBlock:^{
 		UIViewController *vc = self.presentedViewController;
-		NSLog(@"Dismissing viewController: %@", vc);
+		DebugLog(@"Dismissing viewController: %@", vc);
 		[super dismissViewControllerAnimated:flag completion:
 		 ^{
 			 if (completion)
