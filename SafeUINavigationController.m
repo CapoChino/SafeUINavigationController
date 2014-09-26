@@ -43,6 +43,7 @@ typedef enum {
 @interface SafeUINavigationController ()
 @property () NSOperationQueue *q;
 @property () NSMutableArray *finishOps;
+@property () UIWindow *touchInterceptor;
 @end
 
 @implementation SafeUINavigationController
@@ -92,6 +93,24 @@ typedef enum {
 	// Disable the swipe-to-go-back feature that was introduced in iOS7, as it can fairly easily happen accidentally.  When it does, even if you don't swipe it all the way but instead come back to the graph, the uiscrollview's zoom is reset, which is quite annoying. Worse, our didShowViewController delegate function if the user aborts the pop swipe, thus leaving our queue stuck forever waiting for the finish. Disabling this fixes issue #81.
 	if ([self respondsToSelector:@selector(interactivePopGestureRecognizer)])
 		self.interactivePopGestureRecognizer.enabled = NO;
+
+    self.touchInterceptor = [[UIWindow alloc] initWithFrame:CGRectZero];
+    self.touchInterceptor.alpha = 0.2;
+    self.touchInterceptor.backgroundColor = [UIColor yellowColor];
+}
+
+- (void)disableTaps
+{
+    CGRect windowRect = [UIApplication sharedApplication].keyWindow.frame;
+    self.touchInterceptor.frame = windowRect;
+    self.touchInterceptor.windowLevel = UIWindowLevelAlert;
+    [self.touchInterceptor makeKeyAndVisible];
+}
+
+- (void)enableTaps
+{
+    [self.touchInterceptor resignKeyWindow];
+    self.touchInterceptor.hidden = YES;
 }
 
 // This delegate function tells us when a push or pop has completed.
@@ -115,11 +134,14 @@ typedef enum {
 	// Mark the operation as finished. We could probably call [op start] instead.
 	[self.q addOperation:op];
 	// The next operation will start if there is one.
+    [self enableTaps];
 }
 
 - (void)doPush:(Op *)pushOp
 {
-	BOOL immediate;
+    [self disableTaps];
+
+    BOOL immediate;
 	if (self.finishOps.count == 0)
 	{
 		immediate = YES;
@@ -150,6 +172,8 @@ typedef enum {
 
 - (void)doPop:(Op *)popOp
 {
+    [self disableTaps];
+    
 	// Can't do the pop until the last operation finishes
 	if (popOp.modal)
 	{
@@ -248,7 +272,6 @@ typedef enum {
 	// Use weak reference inside the block as not to create a retain cycle.  This does mean we must retain the popOp until completion. This is done by the pariedOp member.
 	__weak Op *weakPopOp = popOp;
 	[popOp addExecutionBlock:^{
-		UIViewController *vc = self.presentedViewController;
 		DebugLog(@"Dismissing viewController: %@", vc);
 		[super dismissViewControllerAnimated:flag completion:
 		 ^{
