@@ -95,8 +95,6 @@ typedef enum {
 		self.interactivePopGestureRecognizer.enabled = NO;
 
     self.touchInterceptor = [[UIWindow alloc] initWithFrame:CGRectZero];
-    self.touchInterceptor.alpha = 0.2;
-    self.touchInterceptor.backgroundColor = [UIColor yellowColor];
 }
 
 - (void)disableTaps
