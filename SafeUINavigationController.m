@@ -94,7 +94,7 @@ typedef enum {
 	if ([self respondsToSelector:@selector(interactivePopGestureRecognizer)])
 		self.interactivePopGestureRecognizer.enabled = NO;
 
-    self.touchInterceptor = [[UIWindow alloc] initWithFrame:CGRectZero];
+    self.touchInterceptor = [[UIWindow alloc] init];
 #if defined(SAFE_NAV_DEBUG)
     self.touchInterceptor.backgroundColor = [UIColor yellowColor];
     self.touchInterceptor.alpha = 0.3;
@@ -103,8 +103,10 @@ typedef enum {
 
 - (void)disableTaps
 {
-    CGRect windowRect = [UIApplication sharedApplication].keyWindow.frame;
-    self.touchInterceptor.frame = windowRect;
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0f)
+        self.touchInterceptor.frame = [UIScreen mainScreen].nativeBounds;
+    else
+        self.touchInterceptor.frame = [UIScreen mainScreen].bounds;
     self.touchInterceptor.windowLevel = UIWindowLevelAlert;
     [self.touchInterceptor makeKeyAndVisible];
 }
@@ -283,5 +285,31 @@ typedef enum {
 		 }];
 	}];
 	[self doPop:popOp];
+}
+
+- (void)showViewController:(UIViewController *)vc sender:(id)sender
+{
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0f)
+    {
+        Op *pushOp = [[Op alloc] initWithType:OP_PUSH viewController:vc modal:NO];
+        [pushOp addExecutionBlock:^{
+            DebugLog(@"Showing viewController: %@", vc);
+            [super showViewController:vc sender:sender];
+        }];
+        [self doPush:pushOp];
+    }
+}
+
+- (void)showDetailViewController:(UIViewController *)vc sender:(id)sender
+{
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0f)
+    {
+        Op *pushOp = [[Op alloc] initWithType:OP_PUSH viewController:vc modal:NO];
+        [pushOp addExecutionBlock:^{
+            DebugLog(@"Showing detail viewController: %@", vc);
+            [super showDetailViewController:vc sender:sender];
+        }];
+        [self doPush:pushOp];
+    }
 }
 @end
