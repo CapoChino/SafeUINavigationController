@@ -95,6 +95,10 @@ typedef enum {
 		self.interactivePopGestureRecognizer.enabled = NO;
 
     self.touchInterceptor = [[UIWindow alloc] initWithFrame:CGRectZero];
+#if defined(SAFE_NAV_DEBUG)
+    self.touchInterceptor.backgroundColor = [UIColor yellowColor];
+    self.touchInterceptor.alpha = 0.3;
+#endif
 }
 
 - (void)disableTaps
@@ -270,7 +274,7 @@ typedef enum {
 	// Use weak reference inside the block as not to create a retain cycle.  This does mean we must retain the popOp until completion. This is done by the pariedOp member.
 	__weak Op *weakPopOp = popOp;
 	[popOp addExecutionBlock:^{
-		DebugLog(@"Dismissing viewController: %@", vc);
+		DebugLog(@"Dismissing viewController: %@", self.presentedViewController);
 		[super dismissViewControllerAnimated:flag completion:
 		 ^{
 			 if (completion)
