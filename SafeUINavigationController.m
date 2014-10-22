@@ -1,6 +1,5 @@
 //
 //  SafeUINavigationController.m
-//  MotionDemo
 //
 //  Created by Casey Persson on 6/12/14.
 //
@@ -44,6 +43,7 @@ typedef enum {
 @property () NSOperationQueue *q;
 @property () NSMutableArray *finishOps;
 @property () UIWindow *touchInterceptor;
+@property () UIWindow *oldKeyWindow;
 @end
 
 @implementation SafeUINavigationController
@@ -103,6 +103,7 @@ typedef enum {
 
 - (void)disableTaps
 {
+    self.oldKeyWindow = [[UIApplication sharedApplication] keyWindow];
     if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0f)
         self.touchInterceptor.frame = [UIScreen mainScreen].nativeBounds;
     else
@@ -113,8 +114,9 @@ typedef enum {
 
 - (void)enableTaps
 {
-    [self.touchInterceptor resignKeyWindow];
     self.touchInterceptor.hidden = YES;
+    [self.oldKeyWindow makeKeyAndVisible];
+    self.oldKeyWindow = nil;
 }
 
 // This delegate function tells us when a push or pop has completed.
