@@ -7,6 +7,8 @@
 
 #import "SafeUINavigationController.h"
 
+//#define INTERCEPT_TOUCHES
+
 //////////////////////////////////////////////////////////////////
 // Represents an animation operation
 typedef enum {
@@ -94,15 +96,18 @@ typedef enum {
 	if ([self respondsToSelector:@selector(interactivePopGestureRecognizer)])
 		self.interactivePopGestureRecognizer.enabled = NO;
 
+#if defined(INTERCEPT_TOUCHES)
     self.touchInterceptor = [[UIWindow alloc] init];
 #if defined(SAFE_NAV_DEBUG)
     self.touchInterceptor.backgroundColor = [UIColor yellowColor];
     self.touchInterceptor.alpha = 0.3;
 #endif
+#endif
 }
 
 - (void)disableTaps
 {
+#if defined(INTERCEPT_TOUCHES)
     DebugLog(@"Disabling taps");
 //    if (self.oldKeyWindow == nil)
     {
@@ -118,14 +123,17 @@ typedef enum {
         self.touchInterceptor.frame = [UIScreen mainScreen].bounds;
     self.touchInterceptor.windowLevel = UIWindowLevelAlert;
     [self.touchInterceptor makeKeyAndVisible];
+#endif
 }
 
 - (void)enableTaps
 {
+#if defined(INTERCEPT_TOUCHES)
     DebugLog(@"Enabling taps");
     self.touchInterceptor.hidden = YES;
     [self.oldKeyWindow makeKeyAndVisible];
     self.oldKeyWindow = nil;
+#endif
 }
 
 // This delegate function tells us when a push or pop has completed.
