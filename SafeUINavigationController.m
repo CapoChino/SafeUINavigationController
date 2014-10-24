@@ -103,7 +103,15 @@ typedef enum {
 
 - (void)disableTaps
 {
-    self.oldKeyWindow = [[UIApplication sharedApplication] keyWindow];
+    DebugLog(@"Disabling taps");
+//    if (self.oldKeyWindow == nil)
+    {
+        self.oldKeyWindow = [[UIApplication sharedApplication] keyWindow];
+    }
+//    else
+//    {
+//        NSLog(@"Warning: disableTaps called while taps already disabled. This may indicate a serialization problem in SafeUINavigationController");
+//    }
     if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0f)
         self.touchInterceptor.frame = [UIScreen mainScreen].nativeBounds;
     else
@@ -114,6 +122,7 @@ typedef enum {
 
 - (void)enableTaps
 {
+    DebugLog(@"Enabling taps");
     self.touchInterceptor.hidden = YES;
     [self.oldKeyWindow makeKeyAndVisible];
     self.oldKeyWindow = nil;
@@ -145,8 +154,6 @@ typedef enum {
 
 - (void)doPush:(Op *)pushOp
 {
-    [self disableTaps];
-
     BOOL immediate;
 	if (self.finishOps.count == 0)
 	{
@@ -172,14 +179,12 @@ typedef enum {
 		DebugLog(@"Scheduling Push.");
 		[pushFinished addDependency:pushOp];
 		// Schedule it
-		[self.q addOperation:pushOp];
+        [self.q addOperation:pushOp];
 	}
 }
 
 - (void)doPop:(Op *)popOp
 {
-    [self disableTaps];
-    
 	// Can't do the pop until the last operation finishes
 	if (popOp.modal)
 	{
@@ -217,6 +222,7 @@ typedef enum {
 	Op *pushOp = [[Op alloc] initWithType:OP_PUSH viewController:viewController modal:NO];
 	[pushOp addExecutionBlock:^{
 		DebugLog(@"Pushing viewController: %@", viewController);
+        [self disableTaps];
 		[super pushViewController:viewController animated:animated];
 	}];
 	[self doPush:pushOp];
@@ -227,6 +233,7 @@ typedef enum {
 	Op *popOp = [[Op alloc] initWithType:OP_POP viewController:self.topViewController modal:NO];
 	[popOp addExecutionBlock:^{
 		DebugLog(@"Popping viewController: %@", self.topViewController);
+        [self disableTaps];
 		[super popViewControllerAnimated:animated];
 	}];
 	[self doPop:popOp];
@@ -238,6 +245,7 @@ typedef enum {
 	Op *popOp = [[Op alloc] initWithType:OP_POP viewController:self.topViewController modal:NO];
 	[popOp addExecutionBlock:^{
 		DebugLog(@"Popping to root view controller.");
+        [self disableTaps];
 		[super popToRootViewControllerAnimated:animated];
 	}];
 	[self doPop:popOp];
@@ -249,6 +257,7 @@ typedef enum {
 	Op *popOp = [[Op alloc] initWithType:OP_POP viewController:self.topViewController modal:NO];
 	[popOp addExecutionBlock:^{
 		DebugLog(@"Popping to viewController: %@", viewController);
+        [self disableTaps];
 		[super popToViewController:viewController animated:animated];
 	}];
 	[self doPop:popOp];
@@ -262,6 +271,7 @@ typedef enum {
 	__weak Op *weakPushOp = pushOp;
 	[pushOp addExecutionBlock:^{
 		DebugLog(@"Presenting viewController: %@", viewControllerToPresent);
+        [self disableTaps];
 		[super presentViewController:viewControllerToPresent animated:flag completion:
 		 ^{
 			 if (completion)
@@ -279,6 +289,7 @@ typedef enum {
 	__weak Op *weakPopOp = popOp;
 	[popOp addExecutionBlock:^{
 		DebugLog(@"Dismissing viewController: %@", self.presentedViewController);
+        [self disableTaps];
 		[super dismissViewControllerAnimated:flag completion:
 		 ^{
 			 if (completion)
@@ -296,6 +307,7 @@ typedef enum {
         Op *pushOp = [[Op alloc] initWithType:OP_PUSH viewController:vc modal:NO];
         [pushOp addExecutionBlock:^{
             DebugLog(@"Showing viewController: %@", vc);
+            [self disableTaps];
             [super showViewController:vc sender:sender];
         }];
         [self doPush:pushOp];
@@ -309,6 +321,7 @@ typedef enum {
         Op *pushOp = [[Op alloc] initWithType:OP_PUSH viewController:vc modal:NO];
         [pushOp addExecutionBlock:^{
             DebugLog(@"Showing detail viewController: %@", vc);
+            [self disableTaps];
             [super showDetailViewController:vc sender:sender];
         }];
         [self doPush:pushOp];
