@@ -307,7 +307,8 @@ typedef enum {
 	}];
 	[self doPop:popOp];
 }
-
+// I don't think we need to override these because it seems Apple has finally fixed the issue internally.  The override doesn't seem to work right, but if you call showViewController twice in a row without this override, it actually pushes one VC, then the next, just like pushing twice with SafeUINavigationController.
+#if 0
 - (void)showViewController:(UIViewController *)vc sender:(id)sender
 {
     if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0f)
@@ -335,4 +336,5 @@ typedef enum {
         [self doPush:pushOp];
     }
 }
+#endif
 @end
