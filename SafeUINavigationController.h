@@ -26,5 +26,5 @@
    * This class sets it's own delegate member, which is required for correct operation.  Thus users may not set the delegate of this class.  (The class could be augmented to accomodate this if necessary.)
    * The pop functions here return before the actual pop happens, thus they cannot return the popped VCs so return nil.
 */
-@interface SafeUINavigationController : UINavigationController <UINavigationControllerDelegate>
+@interface SafeUINavigationController : UINavigationController <UINavigationControllerDelegate, UIGestureRecognizerDelegate>
 @end

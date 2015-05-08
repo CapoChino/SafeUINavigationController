@@ -93,9 +93,10 @@ typedef enum {
 {
     [super viewDidLoad];
 	// Disable the swipe-to-go-back feature that was introduced in iOS7, as it can fairly easily happen accidentally.  When it does, even if you don't swipe it all the way but instead come back to the graph, the uiscrollview's zoom is reset, which is quite annoying. Worse, our didShowViewController delegate function if the user aborts the pop swipe, thus leaving our queue stuck forever waiting for the finish. Disabling this fixes issue #81.
-	if ([self respondsToSelector:@selector(interactivePopGestureRecognizer)])
+    if ([self respondsToSelector:@selector(interactivePopGestureRecognizer)]) {
 		self.interactivePopGestureRecognizer.enabled = NO;
-
+        self.interactivePopGestureRecognizer.delegate = self;
+    }
 #if defined(INTERCEPT_TOUCHES)
     self.touchInterceptor = [[UIWindow alloc] init];
 #if defined(SAFE_NAV_DEBUG)
@@ -142,6 +143,12 @@ typedef enum {
 	// The operation that finished was the first one queued since they're serialized.
 	Op *op = self.finishOps.firstObject;
 	[self finishedOp:op];
+}
+
+// InteractivePopGesture is turned off for safe nav
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
+{
+    return NO;
 }
 
 //////////////////////////////////////////////////////////////
