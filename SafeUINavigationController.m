@@ -270,7 +270,7 @@ typedef enum {
 {
 	Op *pushOp = [[Op alloc] initWithType:OP_PUSH viewController:viewController modal:NO];
     pushOp.name = @"Start:";
-    __weak Op *weakOp = pushOp;
+    __unused __weak Op *weakOp = pushOp;
 	[pushOp addExecutionBlock:^{
         DebugLog(@"%@", weakOp.description);
         [self disableTaps];
@@ -283,7 +283,7 @@ typedef enum {
 {
 	Op *popOp = [[Op alloc] initWithType:OP_POP viewController:self.topViewController modal:NO];
     popOp.name = @"Start:";
-    __weak Op *weakOp = popOp;
+    __unused __weak Op *weakOp = popOp;
 	[popOp addExecutionBlock:^{
         DebugLog(@"%@", weakOp.description);
         [self disableTaps];
@@ -310,7 +310,7 @@ typedef enum {
 {
 	Op *popOp = [[Op alloc] initWithType:OP_POP viewController:self.topViewController modal:NO];
     popOp.name = @"Start:";
-    __weak Op *weakOp = popOp;
+    __unused __weak Op *weakOp = popOp;
 	[popOp addExecutionBlock:^{
         DebugLog(@"%@", weakOp.description);
         [self disableTaps];
