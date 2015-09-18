@@ -7,6 +7,7 @@
 #import <UIKit/UIKit.h>
 
 //#define SAFE_NAV_DEBUG
+//#define INTERCEPT_TOUCHES
 
 #ifdef SAFE_NAV_DEBUG
 #define DebugLog(fmt,...) NSLog(@"%@",[NSString stringWithFormat:(fmt), ##__VA_ARGS__]);

@@ -7,8 +7,6 @@
 
 #import "SafeUINavigationController.h"
 
-//#define INTERCEPT_TOUCHES
-
 //////////////////////////////////////////////////////////////////
 // Represents an animation operation
 typedef enum {
@@ -36,6 +34,15 @@ typedef enum {
 		self.modal = modal;
 	}
 	return self;
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%@ %@ view controller %@%@",
+            self.name,
+            self.type == OP_PUSH ? @"Pushing" : @"Popping",
+            self.vc,
+            self.modal ? @" modally" : @""
+            ];
 }
 @end
 
@@ -74,6 +81,17 @@ typedef enum {
         [self setup];
     }
     return self;
+}
+
+- (NSString *)description {
+    NSDictionary *descriptionDictionary =
+    [NSDictionary dictionaryWithObjectsAndKeys:
+        super.description, @"self",
+        self.q, @"Queue",
+        self.q.operations, @"Queue Operations",
+        self.finishOps, @"Finish Ops:",
+        nil];
+    return [descriptionDictionary description];
 }
 
 - (void)setDelegate:(id<UINavigationControllerDelegate>)delegate
@@ -156,7 +174,7 @@ typedef enum {
 
 - (void)finishedOp:(Op *)op
 {
-	DebugLog(@"Finished a %@ transition.", (op.type == OP_PUSH ? @"PUSH" : @"POP"));
+    DebugLog(@"%@", op.description);
 	[self.finishOps removeObject:op];
 	// Disconnect the operations so both can be freed
 	op.pairedOp.pairedOp = nil;
@@ -181,6 +199,7 @@ typedef enum {
 		[pushOp addDependency:self.finishOps.lastObject];
 	}
 	Op *pushFinished = [[Op alloc] initWithType:OP_PUSH viewController:pushOp.vc modal:pushOp.modal];
+    pushFinished.name = @"Finish:";
 	pushOp.pairedOp = pushFinished;
 	pushFinished.pairedOp = pushOp;
 	[self.finishOps addObject:pushFinished];
@@ -191,7 +210,7 @@ typedef enum {
 	}
 	else
 	{
-		DebugLog(@"Scheduling Push.");
+		DebugLog(@"Scheduling: %@", pushOp);
 		[pushFinished addDependency:pushOp];
 		// Schedule it
         [self.q addOperation:pushOp];
@@ -220,12 +239,13 @@ typedef enum {
 		}
 	}
 	Op *popFinished = [[Op alloc] initWithType:OP_POP viewController:popOp.vc modal:popOp.modal];
+    popFinished.name = @"Finish:";
 	popOp.pairedOp = popFinished;
 	popFinished.pairedOp = popOp;
 	[popFinished addDependency:popOp];
 	[self.finishOps addObject:popFinished];
 	// Schedule it
-	DebugLog(@"Scheduling Pop: %@", popOp.vc);
+	DebugLog(@"Scheduling: %@", popOp);
 	[self.q addOperation:popOp];
 }
 
@@ -235,8 +255,10 @@ typedef enum {
 - (void)pushViewController:(UIViewController *)viewController animated:(BOOL)animated
 {
 	Op *pushOp = [[Op alloc] initWithType:OP_PUSH viewController:viewController modal:NO];
+    pushOp.name = @"Start:";
+    __weak Op *weakOp = pushOp;
 	[pushOp addExecutionBlock:^{
-		DebugLog(@"Pushing viewController: %@", viewController);
+        DebugLog(@"%@", weakOp.description);
         [self disableTaps];
 		[super pushViewController:viewController animated:animated];
 	}];
@@ -246,8 +268,10 @@ typedef enum {
 - (UIViewController *)popViewControllerAnimated:(BOOL)animated
 {
 	Op *popOp = [[Op alloc] initWithType:OP_POP viewController:self.topViewController modal:NO];
+    popOp.name = @"Start:";
+    __weak Op *weakOp = popOp;
 	[popOp addExecutionBlock:^{
-		DebugLog(@"Popping viewController: %@", self.topViewController);
+        DebugLog(@"%@", weakOp.description);
         [self disableTaps];
 		[super popViewControllerAnimated:animated];
 	}];
@@ -258,6 +282,7 @@ typedef enum {
 - (NSArray *)popToRootViewControllerAnimated:(BOOL)animated
 {
 	Op *popOp = [[Op alloc] initWithType:OP_POP viewController:self.topViewController modal:NO];
+    popOp.name = @"Start:";
 	[popOp addExecutionBlock:^{
 		DebugLog(@"Popping to root view controller.");
         [self disableTaps];
@@ -270,8 +295,10 @@ typedef enum {
 - (NSArray *)popToViewController:(UIViewController *)viewController animated:(BOOL)animated
 {
 	Op *popOp = [[Op alloc] initWithType:OP_POP viewController:self.topViewController modal:NO];
+    popOp.name = @"Start:";
+    __weak Op *weakOp = popOp;
 	[popOp addExecutionBlock:^{
-		DebugLog(@"Popping to viewController: %@", viewController);
+        DebugLog(@"%@", weakOp.description);
         [self disableTaps];
 		[super popToViewController:viewController animated:animated];
 	}];
@@ -282,10 +309,11 @@ typedef enum {
 - (void)presentViewController:(UIViewController *)viewControllerToPresent animated:(BOOL)flag completion:(void (^)(void))completion
 {
 	Op *pushOp = [[Op alloc] initWithType:OP_PUSH viewController:viewControllerToPresent modal:YES];
+    pushOp.name = @"Start:";
 	// Use weak reference inside the block as not to create a retain cycle. This does mean we must retain the pushOp until completion. This is done by the pariedOp member.
 	__weak Op *weakPushOp = pushOp;
 	[pushOp addExecutionBlock:^{
-		DebugLog(@"Presenting viewController: %@", viewControllerToPresent);
+		DebugLog(@"%@", weakPushOp.description);
         [self disableTaps];
 		[super presentViewController:viewControllerToPresent animated:flag completion:
 		 ^{
@@ -300,6 +328,7 @@ typedef enum {
 - (void)dismissViewControllerAnimated:(BOOL)flag completion:(void (^)(void))completion
 {
 	Op *popOp = [[Op alloc] initWithType:OP_POP viewController:self.presentedViewController modal:YES];
+    popOp.name = @"Start:";
 	// Use weak reference inside the block as not to create a retain cycle.  This does mean we must retain the popOp until completion. This is done by the pariedOp member.
 	__weak Op *weakPopOp = popOp;
 	[popOp addExecutionBlock:^{
