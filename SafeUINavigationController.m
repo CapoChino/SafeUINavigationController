@@ -158,9 +158,19 @@ typedef enum {
 // This delegate function tells us when a push or pop has completed.
 - (void)navigationController:(UINavigationController *)navigationController didShowViewController:(UIViewController *)viewController animated:(BOOL)animated
 {
-	// The operation that finished was the first one queued since they're serialized.
-	Op *op = self.finishOps.firstObject;
-	[self finishedOp:op];
+    // The operation that finished should the self.finishOps since they're serialized.  However, sometimes this delegate method gets called twice at startup.  So we're a little stricter.
+    for (Op *op in self.finishOps) {
+        // Maks sure that if it's a push, that the view controller being displayed matches what the operation says.  This will weed out a duplicate call to this delegate function.
+        if (op.type == OP_PUSH && op.vc == viewController) {
+            // Push operation finished
+            [self finishedOp:op];
+            break;
+        } else if (op.type == OP_POP) {
+            // For POP, the viewcontroller being shown is the one UNDER the operation's VC, so we can't compare them.
+            [self finishedOp:op];
+            break;
+        }
+    }
 }
 
 // InteractivePopGesture is turned off for safe nav
@@ -187,6 +197,10 @@ typedef enum {
 
 - (void)doPush:(Op *)pushOp
 {
+    if ([self.viewControllers containsObject:pushOp.vc]) {
+        DebugLog(@"Ignoring operation because the view controller is already on the stack: %@", pushOp);
+        return;
+    }
     BOOL immediate;
 	if (self.finishOps.count == 0)
 	{
